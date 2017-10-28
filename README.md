@@ -1,6 +1,15 @@
 # News-Spider
 [Tencent](http://news.qq.com) [NetEase](http://www.163.com) [SouHu](http://news.sohu.com/1/0903/62/subject212846206.shtml) etc. news spider. Including date, title, body and comments of the news. 
 
+### Prerequisites
+```
+sudo apt-get install python3
+sudo pip3 install configparser # or pip3 install configparser --user
+sudo pip3 install bs4 
+sudo pip3 install datetime
+sudo pip3 install requests
+```
+
 ### How to use ?
 ```
 mkdir ./data
