@@ -1,5 +1,6 @@
 # News-Spider
-[Tencent](http://news.qq.com) [NetEase](http://www.163.com) [SouHu](http://news.sohu.com/1/0903/62/subject212846206.shtml) etc. news spider. Including date, title, body and comments of the news. 
+[Tencent](http://news.qq.com) [NetEase](http://www.163.com) [SouHu](http://news.sohu.com/1/0903/62/subject212846206.shtml) etc. news spider. Including date, title, url, body and comments of the news.    
+We first collected urls and then crawled useful informations from the source site.    
 
 ### Prerequisites
 ```
@@ -24,7 +25,7 @@ python3 xxx_spider.py # python3 is required !!!
 ### Data Structure
 ```
 <doc>
-<source>CanKao News<source>
+<source>CanKao News</source>
 <id>995</id>
 <url>http://www.cankaoxiaoxi.com/china/20170531/2061442.shtml</url>
 <title>庆祝香港回归20周年外交部驻港公署举办开放日</title>
@@ -33,4 +34,8 @@ python3 xxx_spider.py # python3 is required !!!
 <comments>NULL</comments>
 </doc>
 ```
+
+### 新闻爬虫
+腾讯新闻，网易新闻，搜狐新闻，参考消息新闻内容爬取脚本。    
+包含对新闻时间，标题，主体部分，原始url及部分评论的爬取功能。
 
