@@ -12,15 +12,24 @@ headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/\
             537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
 offset = 0 #
 limit = 10 #
-max_iter = 3 #
+max_iter = 90 #
 
 
-def createUrl(commentUrl,offset,limit):
+def createCommentsUrl(commentUrl,offset,limit):
     s1 = 'http://comment.news.163.com/api/v1/products/a2869674571f77b5a0867c3d71db5856/threads/'
     s2 = '/comments/newList?offset='
     name = commentUrl.split('/')[-1].split('.')[0]
     u = s1 + str(name) + s2 + str(offset) + '&limit=' + str(limit)
     return u
+
+def GetCommentsNum(commentUrl):
+    s1 = 'http://comment.news.163.com/api/v1/products/a2869674571f77b5a0867c3d71db5856/threads/'
+    name = commentUrl.split('/')[-1].split('.')[0]
+    u = s1 + str(name)
+    res = requests.get(url=u,headers=headers,timeout=10).content
+    data = json.loads(res.decode())
+    num = int(data["cmtAgainst"])+int(data["cmtVote"])+int(data["rcount"])
+    return str(num)
 
 def getItemsList(data):
     setComment = set([])
@@ -34,7 +43,7 @@ def getComments(commentUrl):
     comments = []#set([])
     i = 0
     while(i<max_iter):
-        res = requests.get(url=createUrl(commentUrl,offset,limit),headers=headers,timeout=10).content
+        res = requests.get(url=createCommentsUrl(commentUrl,offset,limit),headers=headers,timeout=10).content
         data = json.loads(res.decode())
         if 'comments' in data.keys() and len(data['comments'].keys()) != 0:
             raw_comments = str(getItemsList(data)).replace("<br>","")
@@ -48,9 +57,15 @@ def getComments(commentUrl):
     offset = 0
     return set(comments)
 
+def store2Txt(filename,commentList):
+    fw = open(filename,'a',encoding='utf-8')
+    for string in commentList:
+        fw.write(string+'\n')
+    fw.close()
+
 def GetNewsLink(newsurl):
     urllist = []
-    rightUrlList = ["news.163.com","view.163.com","ent.163.com","auto.163.com","tech.163.com","sports.163.com","war.163.com","money.163.com","lady.163.com"]
+    rightUrlList = ["news.163.com"]#,"view.163.com","ent.163.com","auto.163.com","tech.163.com","sports.163.com","war.163.com","money.163.com","lady.163.com"]
     print("Processing : " + newsurl)
     res = requests.get(url=newsurl,headers=headers)
     tag = BeautifulSoup(res.content.decode('gb18030'), 'lxml')
@@ -86,12 +101,20 @@ def GetNewsUrlList(NEWSLimits):
         commentUrlList.extend(tmplist)
     return commentUrlList
 
+def getNumFromTxt(filename):
+    c = 0
+    fr = open(filename,'rb+')
+    for line in fr.readlines():
+        c += 1
+    return c
+
 def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
     i = 1
     news_pool = set(news_pool)
     for newslink in news_pool:
+        print("Processing " + newslink)
         try:
-            response = urllib.request.urlopen(newslink)
+            response = urllib.request.urlopen(newslink,timeout=10)
             html = response.read()
         except Exception as e:
             print("URL-Request-----%s: %s"%(type(e), newslink))
@@ -118,6 +141,10 @@ def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
                 commentlist = getComments(newslink)
             except:
                 commentlist = ["NULL"]
+            try:
+                commentnum = GetCommentsNum(newslink)
+            except:
+                commentnum = str(len(commentlist))
         except:
             print("Crawl News " + newslink + "failed.")
             commentlist = ["NULL"]
@@ -130,6 +157,7 @@ def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
         ET.SubElement(doc, "datetime").text = time[0:16]
         ET.SubElement(doc, "body").text = body
         ET.SubElement(doc, "comments").text = '\r\n'.join(list(commentlist))
+        ET.SubElement(doc, "comments_num").text = commentnum
         tree = ET.ElementTree(doc)
         tree.write(doc_dir_path + time[0:16].replace(' ','-').replace(':','-') + "_%d.xml"%(i), encoding = doc_encoding, xml_declaration = True)
         i += 1
@@ -141,7 +169,7 @@ def getTodayNews(doc_dir_path, doc_encoding, NEWSLimits):
     crawl_news(NewsUrlList, 10, doc_dir_path, doc_encoding)
 
 if __name__ == '__main__':
-    NEWSLimits = 100000;
+    NEWSLimits = 5000;
     config = configparser.ConfigParser()
-    config.read('./config.ini', 'utf-8')
+    config.read('../config.ini', 'utf-8')
     getTodayNews(config['DEFAULT']['doc_dir_path']+'netease/', config['DEFAULT']['doc_encoding'], NEWSLimits)

@@ -6,14 +6,22 @@ import json
 import os
 import configparser
 import urllib 
+from goose import Goose
+from goose.text import StopWordsChinese
 
 #global values
 headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/\
             537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
 offset = 0 #
-limit = 10 #
-max_iter = 3 #
+limit = 30 #
+max_iter = 30 #
 
+def getCommentsNum(cmt_id):
+    s1 = 'http://coral.qq.com/article/'
+    u = s1 + str(cmt_id)
+    res = requests.get(url=u,headers=headers,timeout=10).content
+    data = json.loads(res.decode())
+    return data["commentnum"]
 
 def createUrl(cmt_id, number):
     s1 = 'http://coral.qq.com/article/'
@@ -97,11 +105,18 @@ def GetNewsUrlList(NEWSLimits):
         commentUrlList.extend(tmplist)
     return commentUrlList
 
+def getNumFromTxt(filename):
+    c = 0
+    fr = open(filename,'rb+')
+    for line in fr.readlines():
+        c += 1
+    return c
+
 def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
     i = 1
     for newslink in news_pool:
         try:
-            response = urllib.request.urlopen(newslink)
+            response = urllib.request.urlopen(newslink, timeout=10)
             html = response.read()
         except Exception as e:
             print("URL-Request-----%s: %s"%(type(e), newslink))
@@ -123,7 +138,11 @@ def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
             try:
                 commentlist = getComments(cmt_id, limit*max_iter)
             except:
-                commentlist = ["NULL"]            
+                commentlist = ["NULL"]        
+            try:
+                commentnum = getCommentsNum(cmt_id)    
+            except:
+                commentnum = str(len(commentlist))
         except:
             print("Crawl URL " + newslink + " failed.")
             commentlist = ["NULL"]
@@ -136,15 +155,23 @@ def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
         ET.SubElement(doc, "datetime").text = time#time[0:16]
         body_cleaned = re.sub("[A-Za-z0-9\[\`\~\!\@\#\$\^\&\*\(\)\=\|\{\}\'\:\;\'\,\[\]\.\<\>\/\?\~\！\@\#\\\&\*\%]", "", body)
         if len(body_cleaned)/len(body) <= 0.85:
-            ET.SubElement(doc, "body").text = body_cleaned
-            if len(body_cleaned)/len(body) <= 0.5:
-                ET.SubElement(doc, "body").text = "Potential video or image news."
+            try:
+                g = Goose({'stopwords_class': StopWordsChinese})
+                article = g.extract(url=newslink)
+                body = article.cleaned_text
+                ET.SubElement(doc, "body").text = body
+                #title_cleaned = article.title
+            except:
+                ET.SubElement(doc, "body").text = body_cleaned
+                if len(body_cleaned)/len(body) <= 0.5:
+                    ET.SubElement(doc, "body").text = "Potential video or image news."
         else:
             print(len(body_cleaned)/len(body))
             ET.SubElement(doc, "body").text = body
         comment = '\r\n'.join(list(commentlist))
         #comment_cleaned = re.sub("[A-Za-z0-9\[\`\~\!\@\#\$\^\&\*\(\)\=\|\{\}\'\:\;\'\,\[\]\.\<\>\/\?\~\！\@\#\\\&\*\%]", "", comment)
         ET.SubElement(doc, "comments").text = comment
+        ET.SubElement(doc, "comments_num").text = commentnum
         tree = ET.ElementTree(doc)
         tree.write(doc_dir_path + time.replace(' ','-').replace(':','-') + "_%d.xml"%(i), encoding = doc_encoding, xml_declaration = True)
         i += 1
@@ -156,7 +183,7 @@ def getTodayNews(doc_dir_path, doc_encoding, NEWSLimits):
     crawl_news(NewsUrlList, 10, doc_dir_path, doc_encoding)
 
 if __name__ == '__main__':
-    NEWSLimits = 100000;
+    NEWSLimits = 5000;
     config = configparser.ConfigParser()
-    config.read('./config.ini', 'utf-8')
+    config.read('../config.ini', 'utf-8')
     getTodayNews(config['DEFAULT']['doc_dir_path']+'tencent/', config['DEFAULT']['doc_encoding'], NEWSLimits)
