@@ -13,6 +13,7 @@ sudo pip3 install requests
 
 ### How to use ?
 ```
+cd ./News-Spider-master
 mkdir ./data
 mkdir ./data/tencent
 mkdir ./data/souhu
