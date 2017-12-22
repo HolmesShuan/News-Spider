@@ -41,7 +41,7 @@ def get_news_pool(root, start, end, news_url_set):
 def crawl_news(news_pool, min_body_len, doc_dir_path, doc_encoding):
     i = 1
     for news in news_pool:
-        print("Processing"+news[1])
+        print("Processing : "+news[1])
         try:
             response = urllib.request.urlopen(news[1])
         except Exception as e:
