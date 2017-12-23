@@ -16,10 +16,10 @@ def get_news_pool(root, start, end, news_url_set):
         print(page_url)
         try:
             response = urllib.request.urlopen(page_url)
+            html = response.read()
         except Exception as e:
             print("-----%s: %s-----"%(type(e), page_url))
             continue
-        html = response.read()
         soup = BeautifulSoup(html,"lxml") # http://www.crummy.com/software/BeautifulSoup/bs4/doc.zh/
         td = soup.find('ul', class_ = "txt-list-a fz-14")
         a = td.find_all('a')
