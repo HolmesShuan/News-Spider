@@ -1,9 +1,9 @@
 # News-Spider
 [Tencent](http://news.qq.com) [NetEase](http://www.163.com) [SouHu](http://news.sohu.com/1/0903/62/subject212846206.shtml) etc. news spider. Including date, title, url, body and comments of the news.    
-We first collected urls and then crawled useful informations from the source site.    
+We first collected urls and then crawled useful informations from the url pool.    
 
 ### Prerequisites
-```
+```shell
 sudo apt-get install python3
 sudo pip3 install configparser # or pip3 install configparser --user
 sudo pip3 install bs4 
@@ -12,7 +12,7 @@ sudo pip3 install requests
 ```
 
 ### How to use ?
-```
+```shell
 cd ./News-Spider-master
 mkdir ./data
 mkdir ./data/tencent
@@ -24,7 +24,7 @@ python3 xxx_spider.py # python3 is required !!!
 ```
 
 ### Data Structure
-```
+```json
 <doc>
 <source>CanKao News</source>
 <id>995</id>
